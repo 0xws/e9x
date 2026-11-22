@@ -1,14 +1,12 @@
 name: Dependency review
 
 on:
-  # This workflow only reads pull request dependency metadata. Do not add checkout
-  # or execute code from the pull request to this privileged event.
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  pull_request:
 
+# Dependency review uses GitHub's dependency graph compare API. The repository
+# dependency graph must be enabled in Settings > Advanced Security.
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   dependency-review:
@@ -18,4 +16,4 @@ jobs:
         uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
-          comment-summary-in-pr: always
+          comment-summary-in-pr: never
