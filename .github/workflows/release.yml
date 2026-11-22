@@ -35,7 +35,7 @@ jobs:
             bun install
           fi
       - name: Create release PR or publish packages
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: bun run version-packages
           publish: bun run release
