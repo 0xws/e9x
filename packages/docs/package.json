@@ -13,7 +13,7 @@
     "context7:submit": "bun scripts/context7-submit-llms.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.15.30",
+    "@types/node": "^26.6.6",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4"
   }
