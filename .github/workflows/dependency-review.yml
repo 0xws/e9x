@@ -1,7 +1,10 @@
 name: Dependency review
 
 on:
-  pull_request:
+  # This workflow only reads pull request dependency metadata. Do not add checkout
+  # or execute code from the pull request to this privileged event.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
