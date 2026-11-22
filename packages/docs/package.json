@@ -1,0 +1,20 @@
+{
+  "name": "@elysia9x/docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Documentation website and LLM-readable reference for Elysia9X.",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "bun run llms:generate && vitepress build docs",
+    "preview": "vitepress preview docs",
+    "llms:generate": "bun scripts/generate-llms.ts",
+    "typecheck": "tsc --noEmit",
+    "context7:submit": "bun scripts/context7-submit-llms.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.9.3",
+    "vitepress": "^1.6.4"
+  }
+}

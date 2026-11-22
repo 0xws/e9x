@@ -1,0 +1,34 @@
+{
+  "name": "@elysia9x/plugin-codex",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Codex Agent Plugin and repo marketplace installer for Elysia9X.",
+  "license": "MIT",
+  "bin": {
+    "elysia9x-codex": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "exports": {
+    ".": "./src/plugin.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/node": "^22.15.30"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["docs/.vitepress/**/*.ts", "docs/.vitepress/**/*.mts", "scripts/**/*.ts"]
+}

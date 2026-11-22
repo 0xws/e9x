@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "elysia9x",
+  "version": "0.1.0",
+  "description": "Production architecture, security governance and coding-agent workflows for Bun and TypeScript applications.",
+  "author": {
+    "name": "Elysia9X",
+    "url": "https://github.com/0xws/e9x"
+  },
+  "homepage": "https://github.com/0xws/e9x",
+  "repository": "https://github.com/0xws/e9x",
+  "license": "MIT",
+  "keywords": [
+    "architecture",
+    "bun",
+    "typescript",
+    "elysia",
+    "security",
+    "agent-skills"
+  ],
+  "extensions": {
+    "ai.mistral.vibe": {
+      "schemaVersion": 1,
+      "displayName": "Elysia9X",
+      "toolNamespace": "elysia9x",
+      "defaultEnabled": true
+    }
+  }
+}

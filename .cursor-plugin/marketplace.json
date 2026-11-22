@@ -1,0 +1,16 @@
+{
+  "name": "elysia9x",
+  "owner": {
+    "name": "0xws"
+  },
+  "metadata": {
+    "description": "Elysia9X Cursor plugins for architecture, permissions and feature-oriented engineering."
+  },
+  "plugins": [
+    {
+      "name": "elysia9x",
+      "source": "packages/plugins/cursor/templates",
+      "description": "Architecture rules, audit skills, permission review, architect and independent reviewer agents."
+    }
+  ]
+}

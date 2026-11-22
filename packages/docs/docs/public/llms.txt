@@ -1,0 +1,98 @@
+# Elysia9X documentation
+
+> A production engineering standard for Bun and TypeScript applications. This index links to Markdown source pages suitable for retrieval-augmented generation and coding-agent context.
+
+Start with the introduction and architecture reference. Prefer focused pages over loading the full corpus.
+
+- Full reference: https://0xws.github.io/e9x/llms-full.txt
+
+## Coding-agent integrations
+
+Elysia9X separates deterministic governance from LLM reasoning.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/agents.md
+- Website: https://0xws.github.io/e9x/guide/agents
+
+## Reference system architecture
+
+Elysia9X combines Vertical Slice Architecture, Domain-Driven Design where useful, Hexagonal Architecture, a frontend-oriented BFF, selective CQRS, policy-as-code and transactional outbox patterns.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/architecture.md
+- Website: https://0xws.github.io/e9x/guide/architecture
+
+## Authorization and permission governance
+
+Authorization is a mandatory subsystem. Authentication establishes a verified principal; authorization decides whether that principal can perform an action on a resource in a context.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/authorization.md
+- Website: https://0xws.github.io/e9x/guide/authorization
+
+## `@elysia9x/cli`
+
+The CLI is a Bun-native, dependency-light governance tool. It is read-only by default except for explicit initialization and integration installation commands.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/cli.md
+- Website: https://0xws.github.io/e9x/guide/cli
+
+## Context7, `llms.txt` and documentation discovery
+
+Elysia9X is prepared for Context7 indexing, but indexing requires a public repository or public documentation URL to be submitted to Context7.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/context7.md
+- Website: https://0xws.github.io/e9x/guide/context7
+
+## Data ownership, transactions and migrations
+
+PostgreSQL is the default transactional source of truth. Drizzle is an infrastructure adapter. Feature modules own schema definitions; a central schema aggregator feeds a centrally ordered migration history.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/data.md
+- Website: https://0xws.github.io/e9x/guide/data
+
+## Deployment topologies
+
+Use Traefik for TLS termination, host/path routing, redirects, edge rate limits, request size controls, health-aware routing and privacy-safe access logs. It is not the application's permission engine.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/deployment.md
+- Website: https://0xws.github.io/e9x/guide/deployment
+
+## Feature modules and ownership
+
+A feature owns its domain model, use cases, persistence adapters, transport routes, UI components and tests. Its `index.ts` is the public entry point.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/features.md
+- Website: https://0xws.github.io/e9x/guide/features
+
+## What is Elysia9X?
+
+Elysia9X is an independent engineering standard and toolchain for building production TypeScript applications, especially applications using Bun, React, Next.js and Elysia.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/introduction.md
+- Website: https://0xws.github.io/e9x/guide/introduction
+
+## Developing agent plugins
+
+Agent integrations live under `packages/plugins/<agent>/` and are independent workspace packages.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/plugin-development.md
+- Website: https://0xws.github.io/e9x/guide/plugin-development
+
+## Engineering principles
+
+Prefer `features/missions/` over global `controllers/`, `models/` and `views/` directories. The code that changes together should be easy to find together.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/principles.md
+- Website: https://0xws.github.io/e9x/guide/principles
+
+## Testing, observability and operational readiness
+
+Authorization tests must include negative cases, cross-tenant attempts and object-level boundaries.
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/guide/quality-operations.md
+- Website: https://0xws.github.io/e9x/guide/quality-operations
+
+## Elysia9X
+
+**A production engineering standard for Bun, TypeScript and AI-assisted software delivery.**
+
+- Markdown: https://0xws.github.io/e9x/llms/pages/index.md
+- Website: https://0xws.github.io/e9x/

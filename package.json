@@ -1,0 +1,35 @@
+{
+  "name": "elysia9x",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A production engineering standard, documentation site, and Bun-native governance CLI for TypeScript applications.",
+  "packageManager": "bun@1.4.5",
+  "workspaces": [
+    "packages/*",
+    "packages/plugins/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @elysia9x/docs dev",
+    "build": "bun run --filter @elysia9x/docs build",
+    "check": "bun run --filter @elysia9x/cli typecheck && bun run --filter @elysia9x/cli test && bun run --filter @elysia9x/plugin-claude typecheck && bun run --filter @elysia9x/plugin-claude test && bun run --filter @elysia9x/plugin-codex typecheck && bun run --filter @elysia9x/plugin-codex test && bun run --filter @elysia9x/plugin-cursor typecheck && bun run --filter @elysia9x/plugin-cursor test && bun run --filter @elysia9x/plugin-vibe typecheck && bun run --filter @elysia9x/plugin-vibe test && bun run --filter @elysia9x/docs typecheck && bun run --filter @elysia9x/docs build && bun run validate:plugins",
+    "cli": "bun run --filter @elysia9x/cli dev",
+    "docs:llms": "bun run --filter @elysia9x/docs llms:generate",
+    "format": "bunx prettier --write .",
+    "validate:plugins": "node scripts/validate-plugins.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.9",
+    "@changesets/changelog-github": "^0.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xws/e9x.git"
+  },
+  "homepage": "https://0xws.github.io/e9x/",
+  "bugs": {
+    "url": "https://github.com/0xws/e9x/issues"
+  }
+}

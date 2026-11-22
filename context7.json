@@ -1,0 +1,26 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Elysia9X",
+  "description": "A production engineering standard for Bun and TypeScript applications, with a Bun CLI for architecture, security, permissions, database and deployment audits.",
+  "folders": [
+    "packages/docs/docs"
+  ],
+  "excludeFolders": [
+    "node_modules",
+    "dist",
+    ".vitepress",
+    "archive",
+    "drafts",
+    "packages/docs/docs/public"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md"
+  ],
+  "rules": [
+    "Follow the documented feature-oriented architecture and keep domain logic independent of frameworks and infrastructure.",
+    "Validate external input at runtime and use explicit DTOs at API boundaries.",
+    "Every API endpoint must be explicitly declared protected or intentionally public; missing policy information must never imply public access.",
+    "Authorization must be enforced server-side and must fail closed when identity, policy or evaluation is unavailable.",
+    "Treat static audit results as evidence, not proof; inspect runtime behavior and add authorization tests."
+  ]
+}

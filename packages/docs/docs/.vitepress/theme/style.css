@@ -1,0 +1,29 @@
+:root {
+  --vp-c-brand-1: #0e9f6e;
+  --vp-c-brand-2: #0b8c61;
+  --vp-c-brand-3: #08764f;
+  --vp-home-hero-name-color: #0e9f6e;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.action-button.primary {
+  color: white;
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+}

@@ -1,0 +1,652 @@
+# Elysia9X — Full documentation
+
+
+
+---
+
+<!-- source: guide/agents.md -->
+
+# Coding-agent integrations
+
+Elysia9X separates deterministic governance from LLM reasoning. The CLI discovers routes and checks mechanical rules; skills guide agents through semantic review; independent reviewers challenge the evidence; CI enforces release gates; the human owner approves production risk.
+
+## Recommended agent roles
+
+1. Architect/coordinator: decomposes work, owns ADRs, boundaries and integration.
+2. Feature implementer: owns one feature slice and its tests.
+3. Independent reviewer: read-only by default; checks security, architecture, migrations and tests.
+
+Use one writer per feature directory per task. Shared-file changes require explicit ownership. Reviewers should not review their own implementation. The human owner retains final approval for production and destructive changes.
+
+## Integrations
+
+| Agent | Package | Install / discovery |
+|---|---|---|
+| Claude Code | `@elysia9x/plugin-claude` | `elysia9x integrations install claude` |
+| Codex | `@elysia9x/plugin-codex` | `elysia9x integrations install codex`, or `codex plugin marketplace add 0xws/e9x` and install from the Plugins directory |
+| Cursor | `@elysia9x/plugin-cursor` | `elysia9x integrations install cursor` (user-local install) or import the repository marketplace |
+| Mistral Vibe | `@elysia9x/plugin-vibe` | `elysia9x integrations install vibe` |
+
+### Claude Code
+
+The integration writes a project-level `.claude/rules/elysia9x.md` and `.claude/skills/elysia9x-audit/SKILL.md`. Existing files are preserved unless `--force` is supplied.
+
+### Codex
+
+The package uses the portable Agent Plugins 1.0 manifest with OpenAI-specific onboarding metadata. This repository includes a repo marketplace at `.agents/plugins/marketplace.json`. Add the repository as a marketplace using `codex plugin marketplace add 0xws/e9x`, then install Elysia9X from the supported Plugins directory.
+
+### Cursor
+
+The integration is a native Cursor Plugin. It packages a persistent `.mdc` rule, skills, a coordinator agent, an independent reviewer agent and slash commands. For local development, install into `~/.cursor/plugins/local/elysia9x` and reload Cursor. The repository also includes a Cursor marketplace manifest at `.cursor-plugin/marketplace.json`.
+
+### Mistral Vibe
+
+The Vibe package uses Agent Plugins 1.0 plus the `ai.mistral.vibe` extension. It includes skills, a knowledge bundle and a read-only architecture-reviewer subagent. Install project-scoped in `.vibe/plugins/elysia9x` or user-scoped in `~/.vibe/plugins/elysia9x`, then run `/reload-plugins`. Vibe plugin support is experimental; check the host documentation when upgrading.
+
+All integrations preserve existing files by default. `--force` explicitly replaces plugin-managed files. Skills do not grant tool permissions or bypass host approval controls. See [Plugin development](/guide/plugin-development).
+
+
+---
+
+<!-- source: guide/architecture.md -->
+
+# Reference system architecture
+
+Elysia9X combines Vertical Slice Architecture, Domain-Driven Design where useful, Hexagonal Architecture, a frontend-oriented BFF, selective CQRS, policy-as-code and transactional outbox patterns.
+
+## Deployment profile A: integrated application
+
+```mermaid
+flowchart TD
+  Browser --> Edge[Traefik: TLS and routing]
+  Edge --> Next[Next.js on Bun]
+  Next --> Elysia[Elysia BFF Route Handler]
+  Elysia --> UseCases[Feature application use cases]
+  UseCases --> PostgreSQL[(PostgreSQL)]
+  UseCases --> Outbox[(Outbox table)]
+  Worker[Background worker] --> Outbox
+  Worker --> External[External systems]
+```
+
+Use this profile when frontend and API share a lifecycle and operational boundary. Keep one authoritative API entry point. The current Elysia/Next.js integration should be checked against Elysia's current integration documentation; the documented Next.js pattern uses an optional catch-all route such as `app/api/[[...slugs]]/route.ts`.
+
+## Deployment profile B: separately deployed frontend and API
+
+```mermaid
+flowchart TD
+  Browser --> Edge[Traefik]
+  Edge --> Web[Next.js service]
+  Edge --> API[Bun + Elysia service]
+  Web --> API
+  API --> App[Application use cases]
+  App --> DB[(PostgreSQL)]
+  App --> Cache[(Optional Redis)]
+  Worker[Worker] --> DB
+```
+
+Choose separate deployment when API scaling, deployment cadence, resource profiles, network boundaries or team ownership justify it. Do not split a modular monolith merely to claim microservices adoption.
+
+## Technology responsibilities
+
+| Technology | Owns | Does not own |
+|---|---|---|
+| Bun | Runtime, package manager, scripts and test runner | Domain design |
+| TypeScript | Static type checking | Runtime validation |
+| Next.js | Rendering, navigation and frontend composition | Authorization boundary |
+| React | UI composition | Business persistence |
+| Elysia | HTTP transport and BFF | Domain model |
+| Eden Treaty | Typed client contract | Runtime security |
+| Drizzle | Persistence adapter and migrations | Business invariants alone |
+| PostgreSQL | Durable data and transactional consistency | Application orchestration |
+| CEL | Policy expression evaluation | Authentication |
+| Traefik | TLS and edge routing | Application permissions |
+
+## Feature layout
+
+```text
+features/missions/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── services/
+│   └── errors/
+├── application/
+│   ├── commands/
+│   ├── queries/
+│   ├── use-cases/
+│   ├── ports/
+│   └── dto/
+├── infrastructure/
+│   └── persistence/
+├── transport/
+│   ├── routes.ts
+│   ├── schemas.ts
+│   └── presenters.ts
+├── ui/
+├── tests/
+└── index.ts
+```
+
+## Dependency rules
+
+- Domain imports no frameworks, databases, HTTP or UI modules.
+- Application depends on domain and ports, not concrete adapters.
+- Infrastructure implements ports.
+- Transport validates and maps HTTP concerns, then invokes use cases.
+- Cross-feature imports use the target feature's public entry point.
+- Composition roots wire adapters to application ports.
+
+Do not create an interface for every function. Create ports at meaningful external boundaries such as repositories, clocks, payment providers, storage, identity, queues and policy evaluators.
+
+## BFF contracts
+
+Endpoints represent application capabilities rather than raw database tables. Validate external input at runtime, bound pagination and payload size, use explicit DTOs, define consistent errors and set downstream timeouts. Use Eden Treaty for internal TypeScript consumers where appropriate; use OpenAPI and generated clients when portable public contracts are needed.
+
+## Optional patterns
+
+Use CQRS when read and write paths have meaningfully different models or scaling needs. Use an outbox when a database transaction must reliably trigger external publication. Use Redis, queues and service extraction only for concrete requirements.
+
+
+---
+
+<!-- source: guide/authorization.md -->
+
+# Authorization and permission governance
+
+Authorization is a mandatory subsystem. Authentication establishes a verified principal; authorization decides whether that principal can perform an action on a resource in a context.
+
+## Models
+
+Use only the models the domain needs:
+
+- RBAC for roles and broad capabilities.
+- ABAC for principal, resource and environmental attributes.
+- ReBAC for ownership, membership, delegation and relationships.
+- CEL for safe expression evaluation when policies need to be configurable.
+
+CEL is an evaluator, not an authentication provider or a complete authorization data model.
+
+## PEP and PDP
+
+- PEP (Policy Enforcement Point) enforces access at the operation boundary.
+- PDP (Policy Decision Point) evaluates a structured authorization request.
+- Policy registry owns stable policy IDs and versions.
+- Policy administration controls authoring, testing, review and publication.
+
+The PDP should receive minimal, trusted context: principal, action, resource and verified environment/relationship attributes.
+
+## Fail closed
+
+Missing policies, unauthenticated principals, invalid policy bundles, evaluation failures, timeouts and unknown actions must not grant access. Public endpoints are explicitly declared, justified, reviewed and time-bounded.
+
+## Object and tenant scope
+
+Role checks alone are insufficient for many operations. Verify object ownership, membership and tenant context. Scope repository queries by tenant when possible. Do not trust tenant IDs supplied by the browser without verifying membership. Test cross-tenant reads, writes, deletes, exports and relationship traversal.
+
+## Permission inventory
+
+The CLI uses `.elysia9x/permissions.json`. Each entry records feature, method, route, access state, policy ID, resource scope, test reference, reviewer, review date and expiry. Public entries additionally require a reason. Review metadata is checked for completeness, expiry and configured maximum age.
+
+Example:
+
+```json
+{
+  "feature": "missions",
+  "method": "GET",
+  "path": "/missions/:id",
+  "access": "protected",
+  "policy": "mission:read",
+  "resourceScope": "mission ownership and verified tenant membership",
+  "authorizationTest": "features/missions/tests/authorization/read-mission.test.ts",
+  "reviewer": "security-owner",
+  "reviewedAt": "2026-11-01",
+  "expiresAt": "2027-05-01"
+}
+```
+
+## Static audit limitations
+
+Static discovery can find literal route declarations and compare them with the inventory. It cannot prove composed middleware, macro behavior, runtime authorization, property-level filtering or tenant isolation. The CLI reports uncertainty rather than treating a recognizable `authorize()` call as proof.
+
+For stronger assurance, emit a runtime route manifest from the fully composed Elysia application in a safe test environment, compare it with the static inventory and run authorization integration tests against real repository adapters and tenant fixtures.
+
+
+---
+
+<!-- source: guide/cli.md -->
+
+# `@elysia9x/cli`
+
+The CLI is a Bun-native, dependency-light governance tool. It is read-only by default except for explicit initialization and integration installation commands.
+
+## Install
+
+```bash
+bunx --package @elysia9x/cli elysia9x --help
+```
+
+Or add it as a development dependency:
+
+```bash
+bun add -d @elysia9x/cli
+```
+
+## Commands
+
+```bash
+elysia9x init
+elysia9x doctor
+elysia9x scan
+elysia9x permissions audit
+elysia9x permissions audit --feature missions
+elysia9x routes inventory
+elysia9x architecture audit
+elysia9x database audit
+elysia9x env audit
+elysia9x report --format json
+elysia9x integrations install claude
+elysia9x integrations install codex
+elysia9x integrations install cursor
+elysia9x integrations install vibe
+elysia9x integrations install vibe --user
+```
+
+Commands accept `--cwd <directory>` so a tool can audit a project without changing its current working directory.
+
+## Project metadata
+
+`elysia9x init` creates `.elysia9x/config.json`, `.elysia9x/permissions.json` and `.elysia9x/policies.json` without overwriting existing files. It does not grant public access to any endpoint.
+
+## Findings
+
+A finding includes a stable rule ID, severity, confidence, evidence, file/line when available and a remediation. Permission audit reports also include the discovered endpoint access state, policy ID and review freshness. JSON output is suitable for CI and future SARIF conversion.
+
+The CLI distinguishes errors from warnings and low-confidence signals. Static route discovery supports literal Elysia route declarations and Next.js Route Handler exports in the initial release; dynamic registration and composed plugins may be missed.
+
+## CI
+
+Run the CLI in CI and block high-confidence errors. Review warnings and low-confidence findings explicitly. Never treat a green static scan as a security certification.
+
+
+---
+
+<!-- source: guide/context7.md -->
+
+# Context7, `llms.txt` and documentation discovery
+
+Elysia9X is prepared for Context7 indexing, but indexing requires a public repository or public documentation URL to be submitted to Context7. Committing `context7.json` and `llms.txt` alone does not automatically register a library.
+
+## What's included
+
+- Root `context7.json` limits repository parsing to `packages/docs/docs` and defines accepted project metadata and guidance rules.
+- The docs build generates `/llms.txt` as a concise index of documentation pages.
+- The docs build generates `/llms-full.txt` as a combined Markdown reference.
+- The docs build emits Markdown page mirrors under `/llms/pages/` so LLM-oriented tools can fetch individual source pages.
+- VitePress generates a sitemap for ordinary search-engine discovery.
+- GitHub Actions can refresh the repository's Context7 library after documentation changes.
+
+## Register the repository
+
+1. Publish the repository as public on GitHub.
+2. Visit <https://context7.com/add-library> and submit the GitHub repository URL.
+3. Confirm the library ID (normally `/owner/repository`).
+4. Claim the library to manage its parsing configuration and versions.
+5. Add `CONTEXT7_API_KEY` to GitHub Actions secrets. Optionally set repository variable `CONTEXT7_LIBRARY_ID` if the library ID differs from `/${owner}/${repo}`.
+6. Set repository variables `DOCS_SITE_URL` and `DOCS_BASE` for the deployed documentation origin and base path; the Pages workflow falls back to GitHub Pages metadata.
+7. Push a documentation change and verify the Context7 refresh workflow.
+
+## Submit the hosted `llms.txt` separately (optional)
+
+After deploying the docs site, submit its public `llms.txt` URL using Context7's documented API (the key must have library-management write access):
+
+```bash
+curl --request POST \
+  --url https://context7.com/api/v2/add/llmstxt \
+  --header "Authorization: Bearer ${CONTEXT7_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data '{"llmstxtUrl":"https://0xws.github.io/e9x/llms.txt"}'
+```
+
+This is a one-time registration workflow; do not run it on every commit. The repository refresh workflow uses Context7's GitHub library refresh endpoint after the GitHub repository has already been added.
+
+## Context7 configuration
+
+`context7.json` supports project title, description, folders, exclusions, indexing rules and version metadata. The included configuration selects the English Markdown docs rather than indexing generated assets, build output or implementation source. Context7 can index code examples embedded in documentation; keep examples current and runnable.
+
+## Verify deployment
+
+After deployment, check:
+
+- `https://0xws.github.io/e9x/llms.txt`
+- `https://0xws.github.io/e9x/llms-full.txt`
+- `https://0xws.github.io/e9x/sitemap.xml`
+- one Markdown mirror under `/llms/pages/`
+
+Replace the example hostname with the domain you actually control before publication. The `elysia9x.dev` hostname in this repository is a placeholder, not a claim of ownership or availability.
+
+
+---
+
+<!-- source: guide/data.md -->
+
+# Data ownership, transactions and migrations
+
+PostgreSQL is the default transactional source of truth. Drizzle is an infrastructure adapter. Feature modules own schema definitions; a central schema aggregator feeds a centrally ordered migration history.
+
+## Rules
+
+- Use database constraints for uniqueness, references and invariants that must survive concurrent requests.
+- Use explicit transaction boundaries in application use cases.
+- Use optimistic concurrency/version columns where lost updates are unacceptable.
+- Index measured query patterns; inspect expensive query plans.
+- Bound result sets and prevent N+1 access patterns.
+- Parameterize SQL and review raw SQL.
+- Run migrations as a controlled release step, not from every application replica at startup.
+- Rehearse backups and restores.
+
+## Expand-contract migration lifecycle
+
+1. Expand the schema compatibly.
+2. Deploy code that tolerates old and new schema versions.
+3. Backfill in bounded, observable batches.
+4. Switch reads and writes.
+5. Verify data and telemetry.
+6. Remove obsolete schema in a later release.
+
+A rollback is not always a safe inverse migration. Document forward recovery and data-loss risks.
+
+## Transactional outbox
+
+When a committed database change must publish an event, insert the business change and outbox record in the same transaction. A worker publishes pending records and marks delivery. Assume at-least-once delivery and make consumers idempotent; do not casually claim exactly-once behavior.
+
+## Do not over-engineer
+
+Do not introduce a message broker, event sourcing, CQRS read database or Redis without a real requirement.
+
+
+---
+
+<!-- source: guide/deployment.md -->
+
+# Deployment topologies
+
+## Traefik responsibilities
+
+Use Traefik for TLS termination, host/path routing, redirects, edge rate limits, request size controls, health-aware routing and privacy-safe access logs. It is not the application's permission engine.
+
+Restrict the dashboard/API, trust forwarded headers only from known proxy hops and expose only required ports. Keep databases and internal workers on private networks.
+
+## Beta and preview environments
+
+Never use a browser-controlled browser-controlled version-selection cookie as the authorization boundary for beta access. Use a protected hostname, identity-aware access gateway, verified identity claim or explicit allowlist. Routing selects a target; it does not authorize a user.
+
+## Container rules
+
+- Build immutable artifacts and pin runtime/base image versions.
+- Run as non-root.
+- Keep secrets out of image layers and build logs.
+- Use read-only filesystems where feasible and drop unnecessary capabilities.
+- Expose only necessary ports.
+- Add health checks and graceful shutdown.
+- Set resource requests/limits in orchestrated environments.
+- Scan dependencies, images and infrastructure configuration.
+
+## Release pipeline
+
+1. Install from lockfile.
+2. Format/lint and typecheck.
+3. Run unit and architecture tests.
+4. Run permission and policy audits.
+5. Run integration and contract tests.
+6. Build immutable artifacts.
+7. Scan dependencies, secrets and images.
+8. Validate/rehearse migrations.
+9. Deploy to preview/staging and smoke test.
+10. Obtain production approval.
+11. Roll out progressively where supported.
+12. Verify telemetry and recovery readiness.
+
+## Integrated or separate deployment?
+
+Start integrated. Separate Next.js and Elysia deployments when independent scaling, deployment cadence, resource needs, trust boundaries or team ownership justify the operational cost. Keep the same feature and application boundaries in either profile.
+
+
+---
+
+<!-- source: guide/features.md -->
+
+# Feature modules and ownership
+
+A feature owns its domain model, use cases, persistence adapters, transport routes, UI components and tests. Its `index.ts` is the public entry point.
+
+## Ownership rules
+
+1. One writer per feature directory per implementation task.
+2. A feature may not import another feature's implementation details.
+3. Shared modules require a stable semantic concept and real consumers.
+4. Shared infrastructure changes require coordinator review.
+5. Avoid circular dependencies between features.
+
+## Application use case example
+
+```ts
+export class CompleteMission {
+  constructor(
+    private readonly missions: MissionRepository,
+    private readonly transactions: TransactionPort,
+  ) {}
+
+  async execute(input: { missionId: string; actorId: string }) {
+    return this.transactions.run(async (tx) => {
+      const mission = await this.missions.getForUpdate(input.missionId, tx)
+      mission.complete(input.actorId)
+      await this.missions.save(mission, tx)
+      return { id: mission.id, status: mission.status }
+    })
+  }
+}
+```
+
+The example illustrates a use-case boundary. A real implementation must define error handling, authorization context, transaction semantics and repository contracts for the application's domain.
+
+## Feature completion checklist
+
+- Domain invariants and failures are tested.
+- External inputs are validated by transport schemas.
+- Use cases own orchestration and transaction boundaries.
+- Database rows are mapped to intentional DTOs.
+- Permissions are declared and tested.
+- Feature public API is intentional.
+- Architecture and quality gates pass.
+
+
+---
+
+<!-- source: guide/introduction.md -->
+
+# What is Elysia9X?
+
+Elysia9X is an independent engineering standard and toolchain for building production TypeScript applications, especially applications using Bun, React, Next.js and Elysia.
+
+It is not an official ElysiaJS project and does not replace Elysia. It provides architecture conventions and governance tooling for teams that choose this stack.
+
+## Repository packages
+
+- `@elysia9x/docs`: the documentation site and LLM-readable reference.
+- `@elysia9x/cli`: the Bun-native project auditor and initializer.
+- `@elysia9x/plugin-claude`, `@elysia9x/plugin-codex`, `@elysia9x/plugin-cursor`, and `@elysia9x/plugin-vibe`: provider-specific agent integrations.
+
+New integrations belong under `packages/plugins/` and should implement a small, documented installation contract.
+
+## What Elysia9X is not
+
+Elysia9X does not mandate microservices, Kubernetes, Redis, Kafka, event sourcing or a separate CQRS database. A modular monolith is the default. Add complexity only when the application's measured requirements justify it.
+
+## Status and assurance
+
+The CLI's initial scanners use conservative static analysis. They can identify suspicious patterns and missing declarations, but they cannot prove that runtime middleware, resource-level access checks or tenant isolation are correct. Treat uncertain findings as a prompt for source inspection and integration tests.
+
+
+---
+
+<!-- source: guide/plugin-development.md -->
+
+# Developing agent plugins
+
+Agent integrations live under `packages/plugins/<agent>/` and are independent workspace packages. Keep the core CLI provider-neutral wherever practical; provider-specific manifests and components belong in the adapter package.
+
+## Current integrations
+
+- Claude Code: project rules and skills.
+- Codex: portable Agent Plugins 1.0 `plugin.json` plus `extensions.com.openai` metadata; repo marketplace at `.agents/plugins/marketplace.json`.
+- Cursor: native Cursor Plugin with `.cursor-plugin/plugin.json`, rules, skills, agents and commands; marketplace at `.cursor-plugin/marketplace.json`.
+- Mistral Vibe: Agent Plugins 1.0 plus `extensions.ai.mistral.vibe`, skills, knowledge and a read-only subagent. Vibe plugin support is experimental.
+
+## Installer contract
+
+An installer should export a small function with explicit options and a result containing files written, files preserved and the destination. It should:
+
+- Preserve existing files by default.
+- Overwrite only with explicit `force: true`.
+- Be safe to run repeatedly.
+- Modify only files owned by its integration.
+- Never silently change permissions, secrets or production settings.
+- Include path handling and preservation tests.
+
+## Agent instruction design
+
+Rules should be short and actionable. Skills should define a repeatable procedure, required evidence and a safe output format. Delegate deterministic discovery to `@elysia9x/cli`; use the agent for semantic review. Never claim static checks prove security. Do not let an agent plugin bypass host-level approval or tool permissions.
+
+## Publishing
+
+Publish provider packages independently through Changesets. Keep versions synchronized through workspace release configuration and test plugin manifests/paths in CI before publishing. See the official platform documentation before changing a manifest: [Codex plugins](https://developers.openai.com/plugins/build/plugins), [Cursor plugins](https://cursor.com/docs/plugins), and [Mistral Vibe plugins](https://docs.mistral.ai/vibe/code/cli/plugins).
+
+
+---
+
+<!-- source: guide/principles.md -->
+
+# Engineering principles
+
+## 1. Organize around business capabilities
+
+Prefer `features/missions/` over global `controllers/`, `models/` and `views/` directories. The code that changes together should be easy to find together.
+
+## 2. Keep dependency direction inward
+
+The domain is independent of HTTP, React, Next.js, Elysia, Drizzle and infrastructure. Application use cases depend on ports. Infrastructure and transport implement adapters around those contracts.
+
+## 3. Keep a modular monolith by default
+
+Feature boundaries are valuable even when every feature ships as one application. Extract services only when independent scaling, deployment, reliability or ownership creates a measurable benefit.
+
+## 4. Treat contracts as product interfaces
+
+BFF endpoints express frontend capabilities and return explicit DTOs. Persistence models do not become public API schemas by accident.
+
+## 5. Security is explicit and fail-closed
+
+Every endpoint is classified as protected or intentionally public. Missing policy, missing identity, evaluator failure and unknown access states must never silently become allow decisions.
+
+## 6. Make correctness executable
+
+Architecture rules, route inventories, permission declarations, migration checks and environment audits should be machine-checkable where evidence permits.
+
+## 7. Separate deterministic checks from semantic review
+
+The CLI discovers facts and reports patterns. Human reviewers and coding agents inspect intent, exploitability and business meaning. Static scanning is not a security certification.
+
+## 8. Keep humans accountable for production risk
+
+Agents may implement bounded work and propose changes. A human owner approves production deployment, destructive data changes and material security-risk acceptance.
+
+
+---
+
+<!-- source: guide/quality-operations.md -->
+
+# Testing, observability and operational readiness
+
+## Test portfolio
+
+| Test | Purpose |
+|---|---|
+| Domain unit | Invariants and value objects |
+| Use-case unit | Orchestration and failure modes |
+| Adapter integration | Real DB, queue and provider behavior |
+| Contract | Request/response compatibility |
+| Authorization matrix | Allow/deny, object and tenant cases |
+| Architecture | Dependency direction and feature boundaries |
+| E2E | Critical user journeys |
+| Migration | Upgrade from prior schema and data |
+| Resilience | Timeout, retry and dependency failure behavior |
+
+Authorization tests must include negative cases, cross-tenant attempts and object-level boundaries.
+
+## Observability
+
+Use structured logs, distributed traces and service metrics. OpenTelemetry is a vendor-neutral option.
+
+Minimum signals:
+- Request volume, latency and errors by route template.
+- Database latency, pool saturation and transaction failures.
+- Outbox/queue lag and dead-letter counts.
+- Authorization decisions by policy ID/version, without logging sensitive context.
+- Background job duration, failures and retries.
+- Deployment version and environment.
+
+Never log passwords, tokens, full session cookies, secrets or unnecessary personal data. Sanitize untrusted log fields.
+
+## Reliability
+
+- Configure explicit timeouts for inbound and downstream operations.
+- Retry only transient failures and safe/idempotent operations.
+- Use bounded exponential backoff with jitter.
+- Add circuit breakers only for meaningful downstream failure modes.
+- Support graceful shutdown and drain in-flight requests.
+- Separate liveness from readiness.
+- Define backup/restore RPO and RTO appropriate to the product.
+- Document runbooks, alert ownership and incident escalation.
+
+## Agent definition of done
+
+A feature is complete only when acceptance criteria, runtime validation, tests, authorization declarations, architecture checks, migration/rollout notes and independent review are satisfied. The human owner approves production and material security-risk acceptance.
+
+
+---
+
+<!-- source: index.md -->
+
+# Elysia9X
+
+**A production engineering standard for Bun, TypeScript and AI-assisted software delivery.**
+
+Elysia9X turns architecture principles into an executable engineering discipline. It defines how applications are structured, how features communicate, how permissions are reviewed, how systems are deployed, and how coding agents work safely within a project.
+
+**[Read the guide](/guide/introduction)** · **[Explore the CLI](/guide/cli)**
+
+## The model
+
+| Layer | Responsibility |
+|---|---|
+| Architecture standard | Feature boundaries, domain isolation, BFF, data and operations rules |
+| `@elysia9x/cli` | Deterministic scans, inventories, audits and reports |
+| Plugins | Install agent-specific rules and skills |
+| Documentation | Human-readable and LLM-readable operating reference |
+
+## Design goals
+
+- **Feature-first:** code is colocated by business capability.
+- **Domain isolation:** business rules do not depend on frameworks or databases.
+- **Explicit security:** endpoints are intentionally public or protected.
+- **Runtime correctness:** TypeScript types complement, not replace, runtime validation.
+- **Executable governance:** repeatable checks run locally and in CI.
+- **Agent-ready:** coding agents receive bounded responsibilities and verifiable rules.
+
+## Start here
+
+1. [Understand the principles](/guide/principles).
+2. [Explore the reference architecture](/guide/architecture).
+3. [Install and run the CLI](/guide/cli).
+4. [Audit permissions](/guide/authorization).
+5. [Connect coding agents](/guide/agents).

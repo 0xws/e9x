@@ -1,0 +1,15 @@
+{
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "0xws/e9x"
+    }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

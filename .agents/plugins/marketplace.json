@@ -1,0 +1,21 @@
+{
+  "name": "elysia9x",
+  "interface": {
+    "displayName": "Elysia9X",
+    "shortDescription": "Architecture and engineering governance skills for TypeScript applications."
+  },
+  "plugins": [
+    {
+      "name": "elysia9x",
+      "source": {
+        "source": "local",
+        "path": "./packages/plugins/codex/templates"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

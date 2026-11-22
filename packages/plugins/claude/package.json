@@ -1,0 +1,34 @@
+{
+  "name": "@elysia9x/plugin-claude",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Claude Code integration for Elysia9X: project rules and an architecture/permissions audit skill.",
+  "license": "MIT",
+  "bin": {
+    "elysia9x-claude": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "exports": {
+    ".": "./src/plugin.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/node": "^22.15.30"
+  }
+}

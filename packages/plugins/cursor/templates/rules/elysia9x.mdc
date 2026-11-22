@@ -1,0 +1,17 @@
+---
+description: Elysia9X engineering standard for Bun, TypeScript, Next.js, Elysia and feature-oriented modular applications.
+alwaysApply: true
+---
+
+# Elysia9X project rules
+
+- Organize code by business feature; use each feature's public `index.ts` as its cross-feature API.
+- Domain modules must not import frameworks, React, HTTP transports, Drizzle or infrastructure.
+- Application use cases orchestrate domain behavior and depend on ports, not concrete adapters.
+- Keep Elysia routes thin. Validate all external input at runtime and return intentional DTOs.
+- Never expose database rows or domain entities directly as public API contracts.
+- Every protected operation must authorize a verified principal against the specific resource and tenant. Missing or failed authorization means deny.
+- Public endpoints require explicit declaration, rationale and review.
+- Database changes need reviewed migrations, transaction scope and rollout notes.
+- Run `elysia9x scan` and relevant tests. Treat static checks as evidence, not proof.
+- Do not change production, destructive data, secrets or permission grants without explicit authorization.

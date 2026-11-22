@@ -1,0 +1,36 @@
+{
+  "name": "elysia9x",
+  "version": "0.1.0",
+  "description": "Elysia9X architecture rules, audit skills, feature workflows and independent review agents for Bun and TypeScript projects.",
+  "author": {
+    "name": "Elysia9X"
+  },
+  "homepage": "https://github.com/0xws/e9x",
+  "repository": "https://github.com/0xws/e9x",
+  "license": "MIT",
+  "keywords": [
+    "architecture",
+    "bun",
+    "typescript",
+    "security",
+    "elysia",
+    "agent-skills"
+  ],
+  "category": "Developer Tools",
+  "rules": [
+    "rules/elysia9x.mdc"
+  ],
+  "skills": [
+    "skills/elysia9x-audit",
+    "skills/elysia9x-permissions",
+    "skills/elysia9x-feature"
+  ],
+  "agents": [
+    "agents/elysia9x-architect.md",
+    "agents/elysia9x-reviewer.md"
+  ],
+  "commands": [
+    "commands/elysia9x-audit.md",
+    "commands/elysia9x-permissions.md"
+  ]
+}
