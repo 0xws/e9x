@@ -71,7 +71,6 @@ export function routeKey(route: { feature: string; method: string; path: string 
   const normalized = route.path
     .replace(/:[A-Za-z_$][\w$]*/g, ':param')
     .replace(/\{[^}]+\}/g, ':param')
-    .replace(/\[\.\.\.[^\]]+\]/g, '*')
     .replace(/\[\[\.\.\.[^\]]+\]\]/g, '*')
     .replace(/\[\.\.\.[^\]]+\]/g, '*')
     .replace(/\[[^\]]+\]/g, ':param')
