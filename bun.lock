@@ -45,6 +45,7 @@
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "@types/node": "^26.6.6",
+        "typescript": "^5.9.3",
       },
     },
     "packages/plugins/codex": {
@@ -56,6 +57,7 @@
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "@types/node": "^26.6.6",
+        "typescript": "^5.9.3",
       },
     },
     "packages/plugins/cursor": {
@@ -67,6 +69,7 @@
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "@types/node": "^26.6.6",
+        "typescript": "^5.9.3",
       },
     },
     "packages/plugins/vibe": {
@@ -78,6 +81,7 @@
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "@types/node": "^26.6.6",
+        "typescript": "^5.9.3",
       },
     },
   },
