@@ -71,8 +71,9 @@ export function routeKey(route: { feature: string; method: string; path: string 
   const normalized = route.path
     .replace(/:[A-Za-z_$][\w$]*/g, ':param')
     .replace(/\{[^}]+\}/g, ':param')
+    .replace(/\[\[\.\.\.[^\]]+\]\]/g, '*')
     .replace(/\[\.\.\.[^\]]+\]/g, '*')
-    .replace(/\[([^\]]+)\]/g, ':$1')
+    .replace(/\[[^\]]+\]/g, ':param')
     .replace(/\/+/g, '/')
   return `${route.feature}|${route.method.toUpperCase()}|${normalized}`
 }

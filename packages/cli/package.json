@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@elysia9x/plugin-claude": "^0.1.0",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "@elysia9x/plugin-codex": "^0.1.0",
     "@elysia9x/plugin-cursor": "^0.1.0",
     "@elysia9x/plugin-vibe": "^0.1.0"
