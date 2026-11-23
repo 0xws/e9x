@@ -10,19 +10,17 @@
 [![CodeQL](https://github.com/0xws/e9x/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/0xws/e9x/actions/workflows/codeql.yml)
 [![Docs](https://github.com/0xws/e9x/actions/workflows/deploy-docs.yml/badge.svg?branch=main)](https://github.com/0xws/e9x/actions/workflows/deploy-docs.yml)
 [![License: MIT](https://img.shields.io/github/license/0xws/e9x)](./LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/0xws/e9x?style=social)](https://github.com/0xws/e9x/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/0xws/e9x)](https://github.com/0xws/e9x/commits/main)
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.4.5-black?logo=bun)](https://bun.com)
 [![TypeScript](https://img.shields.io/badge/language-TypeScript-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![npm CLI](https://img.shields.io/npm/v/@elysia9x/cli?label=%40elysia9x%2Fcli)](https://www.npmjs.com/package/@elysia9x/cli)
-[![Claude Code plugin](https://img.shields.io/npm/v/@elysia9x/plugin-claude?label=Claude%20Code%20plugin)](https://www.npmjs.com/package/@elysia9x/plugin-claude)
-[![Codex plugin](https://img.shields.io/npm/v/@elysia9x/plugin-codex?label=Codex%20plugin)](https://www.npmjs.com/package/@elysia9x/plugin-codex)
-[![Cursor plugin](https://img.shields.io/npm/v/@elysia9x/plugin-cursor?label=Cursor%20plugin)](https://www.npmjs.com/package/@elysia9x/plugin-cursor)
-[![Mistral Vibe plugin](https://img.shields.io/npm/v/@elysia9x/plugin-vibe?label=Mistral%20Vibe%20plugin)](https://www.npmjs.com/package/@elysia9x/plugin-vibe)
 
 [Documentation](https://0xws.github.io/e9x/) · [CLI](./packages/cli) · [Plugins](./packages/plugins) · [Discussions](https://github.com/0xws/e9x/discussions) · [Issues](https://github.com/0xws/e9x/issues)
 
 </div>
+
+---
+
+:warning: ***E9x plugins are currently impossible to install from npm. You can instead pull them from this repository instead directly. Sorryyyy!***
 
 ---
 
@@ -59,33 +57,6 @@ Many architecture guides explain how a codebase should look. Elysia9X also provi
 | **07 · Operations** | Bun, containers, Traefik, environments and delivery pipelines |
 | **08 · Reliability** | Observability, timeouts, retries, idempotency, backup and recovery |
 | **09 · Intelligence** | AI coding-agent roles, skills, bounded ownership and review |
-
-## Architecture at a glance
-
-```mermaid
-flowchart TD
-    Browser[Browser / React] --> Edge[Traefik / Edge]
-    Edge --> Next[Next.js]
-    Next --> BFF[Elysia BFF]
-    BFF --> UseCases[Feature application use cases]
-    UseCases --> Domain[Domain models and invariants]
-    UseCases --> Adapters[Ports and infrastructure adapters]
-    Adapters --> DB[(PostgreSQL / Drizzle)]
-    UseCases --> Outbox[(Transactional outbox, when needed)]
-    Outbox --> Worker[Background worker]
-
-    CLI[Elysia9X CLI] --> Source[Source and configuration audits]
-    CLI --> Policies[Permission inventory]
-    Agents[AI coding agents] --> Skills[Platform-specific Elysia9X skills]
-    Skills --> CLI
-```
-
-### Recommended deployment profiles
-
-1. **Integrated application (default):** Next.js hosts the Elysia adapter; one deployable application and one application lifecycle.
-2. **Independently deployed BFF:** Next.js and Bun/Elysia are separate services behind an edge router when independent scaling, deployment cadence or trust boundaries justify it.
-
-Both profiles use the same internal feature architecture. Start with a modular monolith; extract services only for a measurable operational or domain reason.
 
 ## Quick start
 
@@ -176,69 +147,33 @@ elysia9x integrations install vibe --user
 
 Installers preserve existing files by default. `--force` explicitly replaces plugin-managed files. Mistral Vibe's plugin support is experimental; verify compatibility with the Vibe release in use.
 
-## Repository layout
 
-```text
-e9x/
-├── packages/
-│   ├── docs/                  # @elysia9x/docs — VitePress + LLM documentation
-│   ├── cli/                   # @elysia9x/cli — Bun governance CLI
-│   └── plugins/
-│       ├── claude/            # @elysia9x/plugin-claude
-│       ├── codex/             # @elysia9x/plugin-codex
-│       ├── cursor/            # @elysia9x/plugin-cursor
-│       └── vibe/              # @elysia9x/plugin-vibe
-├── .agents/plugins/           # Codex repo marketplace
-├── .cursor-plugin/            # Cursor multi-plugin marketplace
-├── .github/workflows/         # CI, security, release and docs deployment
-├── context7.json              # Context7 indexing configuration
-├── AGENTS.md                  # Repository-level agent rules
-└── package.json               # Bun workspaces
+## Architecture at a glance
+
+```mermaid
+flowchart TD
+    Browser[Browser / React] --> Edge[Traefik / Edge]
+    Edge --> Next[Next.js]
+    Next --> BFF[Elysia BFF]
+    BFF --> UseCases[Feature application use cases]
+    UseCases --> Domain[Domain models and invariants]
+    UseCases --> Adapters[Ports and infrastructure adapters]
+    Adapters --> DB[(PostgreSQL / Drizzle)]
+    UseCases --> Outbox[(Transactional outbox, when needed)]
+    Outbox --> Worker[Background worker]
+
+    CLI[Elysia9X CLI] --> Source[Source and configuration audits]
+    CLI --> Policies[Permission inventory]
+    Agents[AI coding agents] --> Skills[Platform-specific Elysia9X skills]
+    Skills --> CLI
 ```
 
-## GitHub Actions and releases
+### Recommended deployment profiles
 
-The repository includes automated quality, security, documentation and package-release workflows:
+1. **Integrated application (default):** Next.js hosts the Elysia adapter; one deployable application and one application lifecycle.
+2. **Independently deployed BFF:** Next.js and Bun/Elysia are separate services behind an edge router when independent scaling, deployment cadence or trust boundaries justify it.
 
-| Workflow | Trigger | Responsibility |
-|---|---|---|
-| `ci.yml` | Pull requests, pushes to `main`, manual | Workspace typechecks, tests, docs build and plugin manifest validation |
-| `codeql.yml` | Pull requests, pushes to `main`, weekly schedule | Static security analysis for JavaScript and TypeScript |
-| `dependency-review.yml` | Pull requests | Reject dependency changes with high-severity advisories |
-| `deploy-docs.yml` | Docs changes on `main`, manual | Build and deploy VitePress to GitHub Pages |
-| `release.yml` | Pushes to `main` | Changesets version PRs and npm publication |
-| `context7-refresh.yml` | Documentation changes, manual | Refresh the registered Context7 library |
-| `context7-submit-llms.yml` | Manual | Submit hosted `llms.txt` to Context7 |
-
-### Repository setup
-
-1. Enable GitHub Pages with **GitHub Actions** as the build/deployment source.
-2. Add the repository secret `NPM_TOKEN` with publish permission for the `@elysia9x` npm scope. The release workflow uses Changesets and npm provenance.
-3. Add a fine-grained PAT as `RELEASE_TOKEN` with repository contents and pull-request write permissions. This lets the release workflow open version PRs that trigger normal CI; without it, the workflow falls back to `GITHUB_TOKEN`, whose generated PR/push events do not trigger other workflows.
-4. Add `CONTEXT7_API_KEY` as a repository secret and `CONTEXT7_LIBRARY_ID` as a repository variable after registering the public repository with Context7. Set `DOCS_SITE_URL` and `DOCS_BASE` variables if the documentation is hosted somewhere other than GitHub Pages.
-5. Commit the generated `bun.lock` after running `bun install` with the pinned Bun version. CI uses frozen-lockfile installation whenever the lockfile is present.
-6. Protect `main` with required CI and security checks, review requirements, and no direct pushes.
-
-Releases are driven by [Changesets](https://github.com/changesets/changesets). Add a changeset for every publishable package change:
-
-```bash
-bun run changeset
-```
-
-The release workflow opens/updates a version PR. Merging that PR publishes changed public packages to npm. `@elysia9x/docs` is private and is deployed separately to GitHub Pages.
-
-## Documentation and LLM discovery
-
-The documentation package generates:
-
-- `llms.txt` — an index of the documentation.
-- `llms-full.txt` — a consolidated documentation corpus.
-- individual Markdown mirrors for retrieval and context tools.
-- sitemap and robots metadata for search engines.
-
-Documentation: **[0xws.github.io/e9x](https://0xws.github.io/e9x/)**
-
-Context7 setup and registration: [Context7 guide](./packages/docs/docs/guide/context7.md). The repository configuration prepares indexing, but the GitHub repository must be public and registered with Context7 before it becomes available in its library search.
+Both profiles use the same internal feature architecture. Start with a modular monolith; extract services only for a measurable operational or domain reason.
 
 ## Engineering principles
 
