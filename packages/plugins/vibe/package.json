@@ -1,6 +1,6 @@
 {
   "name": "@elysia9x/plugin-vibe",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Mistral Vibe Agent Plugin installer for Elysia9X.",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@elysia9x/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Bun-native architecture, permission, database and environment auditing for Elysia9X projects.",
   "license": "MIT",
@@ -19,9 +19,9 @@
   "dependencies": {
     "@elysia9x/plugin-claude": "^0.1.0",
     "typescript": "^5.9.3",
-    "@elysia9x/plugin-codex": "^0.1.0",
-    "@elysia9x/plugin-cursor": "^0.1.0",
-    "@elysia9x/plugin-vibe": "^0.1.0"
+    "@elysia9x/plugin-codex": "^0.1.1",
+    "@elysia9x/plugin-cursor": "^0.1.1",
+    "@elysia9x/plugin-vibe": "^0.1.1"
   },
   "devDependencies": {
     "@types/bun": "^1.2.0",

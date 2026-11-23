@@ -1,6 +1,6 @@
 {
   "name": "@elysia9x/plugin-cursor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Cursor native plugin installer for Elysia9X.",
   "license": "MIT",
